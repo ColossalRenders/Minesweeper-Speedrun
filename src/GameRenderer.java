@@ -1,6 +1,6 @@
 import processing.core.PApplet;
 
-public class Main extends PApplet {
+public class GameRenderer extends PApplet {
     @Override
     public void setup() {
 
@@ -14,9 +14,5 @@ public class Main extends PApplet {
     @Override
     public void draw() {
 
-    }
-
-    public static void main(String[] args) {
-        PApplet.main("Main");
     }
 }
