@@ -1,4 +1,4 @@
-public class Tile {
+public class Tile implements Drawable {
     private final Vec2i pos;
     private boolean revealed;
     private boolean isMine;
@@ -31,5 +31,10 @@ public class Tile {
 
     public boolean isMine(){
         return isMine;
+    }
+
+    @Override
+    public void draw(GameRenderer renderer) {
+
     }
 }

@@ -1,4 +1,4 @@
-public class Board {
+public class Board implements Drawable {
     private final Tile[] tiles;
     public final int WIDTH;
     public final int HEIGHT;
@@ -57,5 +57,10 @@ public class Board {
 
     public Tile get(Vec2i pos){
         return get(pos.x, pos.y);
+    }
+
+    @Override
+    public void draw(GameRenderer renderer) {
+
     }
 }
