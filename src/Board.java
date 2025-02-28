@@ -1,4 +1,6 @@
 public class Board implements Drawable {
+    private BoardRenderer renderer;
+
     private final Tile[] tiles;
     public final int WIDTH;
     public final int HEIGHT;
@@ -19,7 +21,9 @@ public class Board implements Drawable {
             BL, BM, BR
     };
 
-    private Board(int w, int h){
+    /// Constructors, Factories, and Initializers
+
+    protected Board(int w, int h){
         WIDTH = w;
         HEIGHT = h;
         tiles = new Tile[w * h];
@@ -32,7 +36,13 @@ public class Board implements Drawable {
     public Board populate(){
         for(int x = 0; x < WIDTH; x++){
             for(int y = 0; y < HEIGHT; y++){
-                tiles[x * y] = Tile.of(x, y, false);
+                Tile t = Tile.of(x, y, false);
+                tiles[x * WIDTH + y] = t;
+
+                t.registerInteractiveElement(() -> {
+                    if (t.reveal()) GameLogic.gameOver();
+                    return true;
+                });
             }
         }
 
@@ -49,6 +59,22 @@ public class Board implements Drawable {
         return this;
     }
 
+    public BoardRenderer initGraphics(int x, int y, int width, GameRenderer gameRenderer) {
+        this.renderer = new BoardRenderer(x, y, width, gameRenderer);
+
+        return renderer;
+    }
+
+    /// Tickers
+
+    public void update(){
+        for (Tile t : tiles){
+            t.updateNum(this);
+        }
+    }
+
+    /// Getters and Setters
+
     public Tile get(int x, int y){
         if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return null;
 
@@ -60,7 +86,51 @@ public class Board implements Drawable {
     }
 
     @Override
-    public void draw(GameRenderer renderer) {
+    public ElementRenderer RENDERER() {
+        return renderer;
+    }
 
+    public class BoardRenderer implements StationaryElementRenderer {
+        private final GameRenderer gameRenderer;
+        private int x;
+        private int y;
+        private int width;
+
+        BoardRenderer(int x, int y, int width, GameRenderer renderer){
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            gameRenderer = renderer;
+
+            float tileSize = (float) width / WIDTH;
+            for (Tile t : tiles){
+                t.initGraphics(32, Board.this, renderer);
+            }
+        }
+
+        @Override
+        public void draw() {
+            for (Tile t : tiles){
+                t.RENDERER().drawAt(x, y);
+            }
+        }
+
+        public int getWidth(){
+            return width;
+        }
+
+        @Override
+        public void drawAt(float x, float y) {
+            int xTemp = this.x;
+            int yTemp = this.y;
+
+            this.x = (int) x;
+            this.y = (int) y;
+
+            draw();
+
+            this.x = xTemp;
+            this.y = yTemp;
+        }
     }
 }
