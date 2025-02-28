@@ -1,12 +1,14 @@
 import processing.core.PApplet;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class Tile implements Drawable {
     private TileRenderer renderer;
-    private final Vec2i pos;
+    public final Vec2i pos;
     private boolean revealed;
     private boolean isMine;
+    private boolean marked;
     private int num;
     private Tile(int x, int y){
         pos = new Vec2i(x, y);
@@ -20,7 +22,7 @@ public class Tile implements Drawable {
         return t;
     }
 
-    public Tile registerInteractiveElement(Supplier<Boolean> interaction){
+    public Tile registerInteractiveElement(Function<Integer, Boolean> interaction){
         GameLogic.registerInteractiveElement(interactionElement = MouseInteractionElement.of(interaction));
 
         return this;
@@ -43,12 +45,22 @@ public class Tile implements Drawable {
         return num;
     }
 
+    public int getNum() {
+        return num;
+    }
+
     public boolean reveal() {
         revealed = true;
 
-        System.out.println("aa");
-
         return isMine;
+    }
+
+    public void toggleFlag() {
+        marked = !marked;
+    }
+
+    public boolean isFlagged(){
+        return marked;
     }
 
     public void setMine(boolean mine){
@@ -57,6 +69,10 @@ public class Tile implements Drawable {
 
     public boolean isMine(){
         return isMine;
+    }
+
+    public boolean isRevealed(){
+        return revealed;
     }
 
     @Override
@@ -68,6 +84,7 @@ public class Tile implements Drawable {
         private static final Color COVERED = Color.fromBrightness(1.0f);
         private static final Color REVEALED = Color.fromHSL(200, 1.0f, 0.5f);
         private static final Color MINE = Color.fromHSL(-15, 0.85f, 0.6f);
+        private static final Color FLAG = Color.fromHSL(60, 0.45f, 0.6f);
         private final GameRenderer gameRenderer;
         private float textSize;
         private final Board board;
@@ -91,7 +108,7 @@ public class Tile implements Drawable {
                 if (!isMine) gameRenderer.fill(REVEALED);
                 else gameRenderer.fill(MINE);
             } else {
-                gameRenderer.fill(COVERED);
+                gameRenderer.fill(marked ? FLAG : COVERED);
             }
 
             //gameRenderer.stroke(0, 0);
@@ -101,7 +118,7 @@ public class Tile implements Drawable {
             gameRenderer.rect(absolutePosX, absolutePosY, boardTileSize, boardTileSize);
             interactionElement.atPlacement((int) absolutePosX, (int) absolutePosY, (int) boardTileSize, (int) boardTileSize);
 
-            if (revealed && num > 0) {
+            if (revealed && num > 0 && !isMine) {
                 gameRenderer.textSize(textSize);
                 gameRenderer.fill(0);
                 gameRenderer.textAlign(PApplet.CENTER, PApplet.CENTER);

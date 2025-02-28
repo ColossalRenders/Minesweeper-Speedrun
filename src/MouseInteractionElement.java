@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class MouseInteractionElement {
@@ -6,13 +7,13 @@ public class MouseInteractionElement {
     private int y;
     private int w;
     private int h;
-    private final Supplier<Boolean> function;
+    private final Function<Integer, Boolean> function;
 
-    private MouseInteractionElement(Supplier<Boolean> behavior){
+    private MouseInteractionElement(Function<Integer, Boolean> behavior){
         function = behavior;
     }
 
-    public static MouseInteractionElement of(Supplier<Boolean> behavior){
+    public static MouseInteractionElement of(Function<Integer, Boolean> behavior){
         return new MouseInteractionElement(behavior);
     }
 
@@ -29,7 +30,7 @@ public class MouseInteractionElement {
         return (mouseX >= x && mouseX < x + w) && (mouseY >= y && mouseY < y + h);
     }
 
-    public boolean interact(){
-        return function.get();
+    public boolean interact(int button){
+        return function.apply(button);
     }
 }

@@ -10,7 +10,7 @@ public class GameRenderer extends PApplet {
     public void setup() {
         GameLogic.setup(this);
         int screenSize = Math.min(width, height);
-        int boardWidth = Math.min(screenSize, 1000);
+        int boardWidth = Math.min(screenSize - 100, 1000);
         GameLogic.board.initGraphics((width - boardWidth) / 2, 50, boardWidth, this);
         updateGraphics = true;
         frame = 0;
@@ -28,18 +28,18 @@ public class GameRenderer extends PApplet {
         textSize(64);
         if (GameLogic.isGameOver()) {
             textSize(128);
-            text("GAME OVER", (float) width / 2, (float) height / 2);
+            text(GameLogic.gameOverMessage, (float) width / 2, (float) height / 2);
             return;
         }
 
-        if (mousePressed) {
+        if (mousePressed && mouseButton == PApplet.LEFT) {
             Iterator<MouseInteractionElement> iter = GameLogic.interactionElements.iterator();
 
             while (iter.hasNext()) {
                 MouseInteractionElement element = iter.next();
 
                 if (element.isInBound(mouseX, mouseY)) {
-                    if (element.interact()) iter.remove();
+                    if (element.interact(mouseButton)) iter.remove();
 
                     update();
                     break;
@@ -53,6 +53,36 @@ public class GameRenderer extends PApplet {
             frame ++;
             //color(16);
             ((StationaryElementRenderer) GameLogic.board.RENDERER()).draw();
+
+            fill(255);
+            textAlign(RIGHT);
+            text(GameLogic.board.getNumRemaining(), width - 50, 50);
+        }
+    }
+
+    @Override
+    public void mouseReleased() {
+        if(mouseButton == PApplet.RIGHT) {
+            Iterator<MouseInteractionElement> iter = GameLogic.interactionElements.iterator();
+
+            while (iter.hasNext()) {
+                MouseInteractionElement element = iter.next();
+
+                if (element.isInBound(mouseX, mouseY)) {
+                    if (element.interact(mouseButton)) iter.remove();
+
+                    update();
+                    break;
+                }
+            }
+        }
+    }
+
+    @Override
+    public void keyReleased() {
+        if(key == ENTER && GameLogic.isGameOver()){
+            setup();
+            updateGraphics = true;
         }
     }
 
@@ -61,7 +91,7 @@ public class GameRenderer extends PApplet {
     }
 
     private void update(){
-        GameLogic.board.update();
+        GameLogic.board.tick();
         updateGraphics = true;
     }
 

@@ -1,5 +1,13 @@
+import processing.core.PApplet;
+
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.function.BiConsumer;
+import java.util.function.Predicate;
+
 public class Board implements Drawable {
     private BoardRenderer renderer;
+    private int numRemaining;
 
     private final Tile[] tiles;
     public final int WIDTH;
@@ -34,14 +42,20 @@ public class Board implements Drawable {
     }
 
     public Board populate(){
+        numRemaining = WIDTH * HEIGHT;
         for(int x = 0; x < WIDTH; x++){
             for(int y = 0; y < HEIGHT; y++){
                 Tile t = Tile.of(x, y, false);
-                tiles[x * WIDTH + y] = t;
+                tiles[x * HEIGHT + y] = t;
 
-                t.registerInteractiveElement(() -> {
-                    if (t.reveal()) GameLogic.gameOver();
-                    return true;
+                t.registerInteractiveElement((mouseButton) -> {
+                    if (mouseButton == PApplet.LEFT && !t.isFlagged()) {
+                        flipTile(t);
+                        return true;
+                    } else if (mouseButton == PApplet.RIGHT) {
+                        t.toggleFlag();
+                    }
+                    return false;
                 });
             }
         }
@@ -50,6 +64,7 @@ public class Board implements Drawable {
     }
 
     public Board scatterMines(int num){
+        numRemaining -= num;
         for(int i = 0; i < num; i++){
             int index = (int) (Math.random() * tiles.length);
             if(!tiles[index].isMine()) tiles[index].setMine(true);
@@ -65,12 +80,72 @@ public class Board implements Drawable {
         return renderer;
     }
 
-    /// Tickers
+    /// Tickers and other methods
 
-    public void update(){
+    public Board update(){
         for (Tile t : tiles){
             t.updateNum(this);
         }
+
+        return this;
+    }
+
+    public void tick() {
+        if (numRemaining == 0 && !GameLogic.isGameOver()) {
+            GameLogic.gameOverMessage = "LEVEL CLEARED";
+            GameLogic.gameOver();
+        }
+    }
+
+    public void flipTile(Tile t){
+        if (t.isMine()) {
+            t.reveal();
+            GameLogic.gameOver();
+            for (Tile t2 : tiles) {
+                t2.reveal();
+            }
+        } else {
+            revealTileFloodFill(t.pos, 80);
+        }
+    }
+
+    public void revealTileFloodFill(Vec2i pos, int maxTilesToReveal) {
+        // Create a queue to manage the positions to reveal
+        Queue<Vec2i> queue = new LinkedList<>();
+        queue.add(pos);
+
+        // Variable to track the number of tiles revealed
+        int tilesRevealed = 0;
+
+        // Process the positions in the queue
+        while (!queue.isEmpty() && tilesRevealed < maxTilesToReveal) {
+            Vec2i currentPos = queue.poll();
+            Tile currentTile = get(currentPos);
+
+            // If the tile is already revealed, skip it
+            if (currentTile.isRevealed()) {
+                continue;
+            }
+
+            // Reveal the tile
+            currentTile.reveal();
+            tilesRevealed++;
+
+            // If the tile has no adjacent mines (i.e., num == 0), add its neighbors to the queue
+            if (currentTile.getNum() == 0) {
+                for (Vec2i v : CHECKED_POSITIONS) {
+                    Vec2i neighborPos = currentPos.add(v);
+                    Tile neighborTile = get(neighborPos);
+
+                    // Ensure the neighbor is valid and not revealed
+                    if (neighborTile != null && !neighborTile.isRevealed()) {
+                        queue.add(neighborPos);
+                    }
+                }
+            }
+        }
+
+        numRemaining -= tilesRevealed;
     }
 
     /// Getters and Setters
@@ -83,6 +158,10 @@ public class Board implements Drawable {
 
     public Tile get(Vec2i pos){
         return get(pos.x, pos.y);
+    }
+
+    public int getNumRemaining() {
+        return numRemaining;
     }
 
     @Override

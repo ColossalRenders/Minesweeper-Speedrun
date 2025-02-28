@@ -10,4 +10,13 @@ public class Vec2i {
     public Vec2i add(Vec2i vec){
         return new Vec2i(this.x + vec.x, this.y + vec.y);
     }
+
+    public Vec2i sub(Vec2i vec) {
+        return new Vec2i(this.x - vec.x, this.y - vec.y);
+    }
+
+    @Override
+    public String toString() {
+        return "[ " + x + ", " + y + "]";
+    }
 }
